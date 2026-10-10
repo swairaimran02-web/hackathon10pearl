@@ -211,6 +211,8 @@ billdecoder/
   cache.py                 On-disk response cache
 tests/                     Unit tests (no API key required) incl. dashboard smoke tests
 data/sample_level2.csv     Sample questions to try Level 2 on the training bills
+DEMO_GUIDE.md              Step-by-step guide for recording demo/demo.mp4 (section 7.7)
+demo/                      Optional bonus video: demo.mp4 (created by you)
 ```
 
 ## AI usage

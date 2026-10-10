@@ -3,8 +3,9 @@
 Creates a ZIP containing:
     output/level1.csv
     output/level2.csv
-    source/  (code: run.py, app.py, billdecoder/, tools/, tests/,
+    source/  (code: run.py, app.py, billdecoder/, dashboard/, tools/, tests/,
               README.md, .env.example, requirements.txt, requirements.lock.txt)
+    demo/    (optional bonus video, section 7.7: demo.mp4/.mov/.webm, <=3 min)
 
 The ZIP must be 15 MB or smaller, and must NOT contain .env or API keys.
 
@@ -46,6 +47,19 @@ def add_dir(zf: zipfile.ZipFile, root: Path, arc_prefix: str, folder: str) -> No
             zf.write(path, f"{arc_prefix}/{folder}/{path.relative_to(source_dir)}")
 
 
+def add_demo(zf: zipfile.ZipFile) -> bool:
+    """Add the optional demo/ folder (7.7: demo.mp4/.mov/.webm, <=3 min)."""
+    demo_dir = PROJECT_ROOT / "demo"
+    if not demo_dir.exists():
+        return False
+    added = 0
+    for path in sorted(demo_dir.rglob("*")):
+        if path.is_file():
+            zf.write(path, f"demo/{path.relative_to(demo_dir)}")
+            added += 1
+    return added > 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Package the submission ZIP")
     parser.add_argument("--output", default="output", help="folder with the CSVs")
@@ -72,6 +86,10 @@ def main(argv=None) -> int:
                 zf.write(item_path, f"source/{item}")
             elif item_path.is_dir():
                 add_dir(zf, PROJECT_ROOT, "source", item)
+        if add_demo(zf):
+            print("  demo/ included (bonus video)")
+        else:
+            print("  demo/ not found - skipping (optional)")
 
     size_bytes = dest.stat().st_size
     size_mb = size_bytes / (1024 * 1024)
