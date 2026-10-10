@@ -1,15 +1,59 @@
-# WTQ 2026 - Utility Bill Decoder
+# 🧾 Utility Bill Decoder
 
-An AI-powered assistant that reads Pakistani electricity bills
-(**K-Electric / KESC, LESCO, IESCO**) from images (scans, photos, screenshots)
-and explains them in plain English.
+**AI that reads Pakistani electricity bills (K-Electric / KESC, LESCO, IESCO)
+from images — scans, phone photos or screenshots — and explains them in plain
+English.**
 
-It produces the two required result files:
+Built for the **Women Tech Quest 2026 · Build with AI** hackathon (10Pearls,
+Lahore), then polished into a full **Streamlit dashboard** anyone can run.
+The model does the *reading* and *explaining*; **Python does all the maths** —
+so the results are deterministic, auditable and reproducible.
 
-* **Level 1** - one JSON object per bill with the billing details, readings,
-  charges, taxes and payable amounts (`output/level1.csv`).
-* **Level 2** - a plain-English answer to every customer question about each
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB) ![Tests](https://img.shields.io/badge/tests-23%20passing-22c55e) ![Model](https://img.shields.io/badge/vision%20model-Gemini%203.5%20Flash--Lite-4285F4) ![License](https://img.shields.io/badge/license-MIT-64748b) ![UI](https://img.shields.io/badge/UI-Streamlit-FF4B4B)
+
+---
+
+## What it produces
+
+* **Level 1** — a structured JSON object per bill: provider, billing month,
+  meter readings, units, charges, taxes, arrears and payable amounts
+  (`output/level1.csv`).
+* **Level 2** — a plain-English answer to every customer question about each
   bill (`output/level2.csv`).
+
+Values are taken **exactly as printed on the bill** — never recomputed by the
+model. Credits and subsidies are negative, unreadable values stay `null`
+(never guessed), and personal identifiers (names, addresses, reference/meter
+numbers) are excluded from all outputs.
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Bill Analysis](docs/screenshots/bill-analysis.png) |
+| **Dashboard** — live statistics from the real output files | **Bill Analysis** — every extracted field for a bill |
+| ![Questions & Answers](docs/screenshots/qa.png) | ![Upload Bills](docs/screenshots/upload.png) |
+| **Questions & Answers** — searchable, marked answered/unanswered | **Upload Bills** — drag & drop images, progress bar + log |
+
+More screenshots: [Generated Reports](docs/screenshots/reports.png) ·
+[Settings](docs/screenshots/settings.png).
+
+## Key features
+
+* **Vision-first extraction** — no OCR library, no invoice-extraction service;
+  a multimodal model reads the bill directly (handles Urdu, tilted scans and
+  varied layouts). [Gemini 3.5 Flash-Lite → Google AI Studio, free key].
+* **The model reads, the code computes** — all arithmetic (averages, shares,
+  payable math) happens in deterministic Python.
+* **One batched call per bill** for all 12 Level-2 questions — stays well
+  under free-tier limits.
+* **On-disk response cache** — re-runs are instant and free; results are
+  byte-for-byte reproducible.
+* **Provider-agnostic client** — Google / OpenAI / Anthropic with an automatic
+  fallback model and retry-with-backoff.
+* **Six-page Streamlit dashboard** — real data end-to-end, nothing hardcoded;
+  the API key is never displayed or logged.
+* **Synthetic demo bill** — try the whole pipeline without any private data.
 
 ## How it works
 
@@ -30,241 +74,139 @@ bill image
    +--> 7. output/level2.csv
 ```
 
-Design principle: **the model reads and explains, the code does the maths.**
-Numbers are extracted with a multimodal model, then every calculation is done in
-Python so the answers are deterministic and reproducible.
+## Try it in ~3 minutes (no private data needed)
 
-## Requirements
-
-* Python 3.11 or later (developed on **Python 3.14**).
-* An API key for one of the allowed models (a free Google AI Studio Gemini key
-  is enough).
-
-## Setup
+The repo ships `tools/make_sample_bill.py`, which renders a clean synthetic
+K-Electric bill plus matching CSV templates, so you can run the full pipeline
+on real model calls without any real customer data:
 
 ```bash
-# 1. Create and activate a virtual environment
+# 1. Set up
 python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-# source venv/bin/activate
-
-# 2. Install dependencies
+venv\Scripts\activate            # Windows   (macOS/Linux: source venv/bin/activate)
 pip install -r requirements.txt
 
-# 3. Configure your API key
-copy .env.example .env      # Windows
-# cp .env.example .env      # macOS / Linux
-# then edit .env and set GEMINI_API_KEY=...
+# 2. Add a free Gemini key
+copy .env.example .env           # Windows   (macOS/Linux: cp .env.example .env)
+# edit .env → GEMINI_API_KEY=<your key from Google AI Studio>
+
+# 3. Generate the synthetic demo bill
+python tools/make_sample_bill.py
+
+# 4. Run the pipeline (≈2 API calls on first run, then cached)
+python run.py --bills sample/bills --out output \
+    --level1-template sample/csv/level1.csv \
+    --level2-template sample/csv/level2.csv
+
+# 5. Open the dashboard
+streamlit run app.py            # → http://localhost:8501
 ```
 
-## Run
+## Your own bills
 
-Process a folder of bills and generate both CSV files:
+Process any folder of bill images:
 
 ```bash
-python run.py --bills test/bills --out output/ \
-    --level1-template test/csv/level1.csv \
-    --level2-template test/csv/level2.csv
+python run.py --bills path/to/bills --out output/ \
+    --level1-template my/level1.csv \
+    --level2-template my/level2.csv
 ```
 
-Useful options:
+Useful options: `--no-questions` (Level 1 only), `--limit 2 --verbose` (quick
+smoke test), `--out <dir>` (where the CSVs are written).
 
-```bash
-python run.py --bills train/bills --out output/ --no-questions   # Level 1 only
-python run.py --bills train/bills --limit 2 --verbose            # quick smoke test
-```
+In the dashboard, drag & drop bill images (PNG/JPG/WEBP/BMP) — the original
+file names become the bill IDs, so re-uploading an already-processed bill is
+instant and free thanks to the cache.
 
-## Test-day run (official test data)
+## The dashboard
 
-Place the organizers' test bundle as `data/test/` (bills images plus the two CSV
-templates), then, in Windows PowerShell:
-
-```powershell
-python run.py --bills data\test\bills --out output `
-    --level1-template data\test\csv\level1.csv `
-    --level2-template data\test\csv\level2.csv
-python tools\check_output.py --output output --level2-template data\test\csv\level2.csv
-python tools\package_submission.py --output output --dest wtq-submission.zip
-```
-
-Run the interactive dashboard:
-
-```bash
-streamlit run app.py
-```
-
-## Dashboard (Streamlit app)
-
-An interactive, competition-ready dashboard that drives the **exact same
-`billdecoder` backend** as the CLI — the generated CSV files are identical to
-`run.py` output. The API key stays in the root `.env` and is never displayed
-or logged.
-
-**Install (first time only), Windows PowerShell:**
-
-```powershell
-cd D:\github\hackathon10pearl
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-**Configure your key (one time):**
-
-```powershell
-copy .env.example .env
-# then edit .env and set GEMINI_API_KEY=<your Google AI Studio key>
-```
-
-**Run:**
-
-```powershell
-streamlit run app.py
-```
-
-Your browser opens http://localhost:8501. (Stop it with `Ctrl+C`.)
-
-What works on each page:
+Six pages driving the **exact same `billdecoder` backend** as the CLI — the
+generated CSVs are identical either way:
 
 | Page | What actually works |
 | --- | --- |
-| **Dashboard** | Real statistics from the files in `output/`: bills processed, successful extractions, failed bills, questions answered + live processing log. |
-| **Upload Bills** | Drag & drop bill images (PNG/JPG/WEBP/BMP) with previews, **or** point at a bills folder. Optional Level 1 / Level 2 CSV templates keep the official row order. "Process bills" runs real extraction and writes `output/level1.csv` (and `output/level2.csv` when the Level 2 template is given) with a progress bar and log. |
-| **Bill Analysis** | Every extracted bill: billing dates, meter readings, units, charges, taxes, payable amounts and the printed monthly history (bar chart + table). Missing values show **"Not available"** — nothing is invented. |
-| **Questions & Answers** | Searchable table of every supplied question with its answer; unanswered questions are clearly marked. You can generate answers in-page with the Level 2 template. |
-| **Generated Reports** | Working download buttons for the **actual** `output/level1.csv` / `output/level2.csv` files, previews, and regeneration from processed bills. |
-| **Settings** | Model configuration read from `.env` (API key status only, never the key itself) + a "Test API connection" button. |
+| **Dashboard** | Real statistics from `output/`: bills processed, successes, failures, questions answered + live processing log. |
+| **Upload Bills** | Drag & drop images with previews, or a bills-folder path. Optional CSV templates preserve official row order. Full progress bar + log. |
+| **Bill Analysis** | Every extracted bill: dates, readings, units, charges, taxes, payable amounts + monthly history chart. Missing values show "Not available" — nothing invented. |
+| **Questions & Answers** | Searchable table of every question with its answer; unanswered questions marked; in-page answer generation. |
+| **Generated Reports** | Download the actual `level1.csv` / `level2.csv`, previews, regeneration from processed bills. |
+| **Settings** | Model config read from `.env` (key status only, never the key), "Test API connection" button, output-folder override. |
 
-> Privacy note: personal identifiers (names, addresses, reference and meter
-> serial numbers) are deliberately excluded per the competition rules, so the
-> dashboard shows "Not available" for them instead of extracting them.
-
-Run the unit tests (no API key needed):
+## Testing
 
 ```bash
-pytest -q
+pytest -q        # 23 tests, no API key required
 ```
 
-## Output
-
-| File | Contents |
-| --- | --- |
-| `output/level1.csv` | 10 rows. `bill_id` plus one JSON object per bill in `json`. |
-| `output/level2.csv` | 120 rows. `bill_id`, `question_id`, `question` and the `answer`. |
-| `output/extraction_raw.json` | Debug only: raw model output and history per bill. |
-
-The CSV files are written with Python's `csv` module, so commas, quotes and
-line breaks are quoted correctly and every JSON object stays on one line.
-
-## Validated against the training bills
-
-Ran end-to-end on the 5 training bills (`data/train/bills`) with
-`gemini-3.5-flash-lite`:
-
-| Bill | provider | units | current bill | Notes |
-| --- | --- | --- | --- | --- |
-| KESC_0008 | KE | 151 | 3430.24 | **Matches the guide's official JSON field-for-field** |
-| KESC_0004 | KE | 901 | 45570.25 | 4-register TOU meter - readings correctly `null`; arrears -91877.02, payable 0 confirmed |
-| IESCO_0004 | IESCO | 158 | 3267 | FPA/subsidy lines and payable 3535/3812 confirmed |
-| LESCO_0005 | LESCO | 1017 | 20726 | Bill genuinely prints negative history units; payable is `54770CR` -> -54770 |
-| LESCO_0006 | LESCO | 65 | 5501 | charges+taxes reconcile exactly (5501) |
-
-Every suspicious value was double-checked with a second, focused model read
-(`python tools/verify_bill.py --image <bill> --question "..."`).
-
-A sample Level 2 run on the guide's own questions for KESC_0008 produced the
-correct answers ("taxes = PKR 569.62, 16.6% of the bill"; "2 months above 200
-units: 2025-07 (239) and 2025-08 (203)").
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs the same suite on
+Python 3.11 and 3.12 on every push.
 
 ## Project layout
 
 ```
 run.py                     Command-line entry point
 app.py                     Streamlit dashboard (six pages, full workflow)
-streamlit run app.py       how to launch the dashboard
-.streamlit/config.toml     Dashboard theme (navy sidebar, light background)
-dashboard/
-  __init__.py
-  styles.py                CSS: theme, cards, badges, log
-  components.py            UI building blocks (cards, empty states, tables)
-  plots.py                 Plotly charts from real extracted data
-  state.py                 Session state (records, failures, log)
-  io.py                    Temp uploads, reading generated CSVs/artefacts
-  pipeline_ui.py           Glue: calls billdecoder, writes output files
-tools/verify_bill.py       Re-read specific fields for verification
-billdecoder/
+billdecoder/               Core backend (untouched by the dashboard)
   config.py                Environment + allowed-model validation
-  llm.py                   Provider-agnostic client (Google / OpenAI / Anthropic)
+  llm.py                   Provider-agnostic client (Google/OpenAI/Anthropic)
   prompts.py               Extraction and Q&A prompts
   schema.py                Level 1 schema and controlled vocabularies
   extract.py               Image -> normalized bill object
   normalize.py             Numbers, dates, signs, null handling
-  validate.py              Internal-consistency warnings (numbers must be as printed)
+  validate.py              Internal-consistency warnings (values as printed)
   calc.py                  Deterministic calculations
-  level1.py                builds output/level1.csv
-  level2.py                builds output/level2.csv
-  preprocess.py            Image loading and light pre-processing
+  level1.py / level2.py    build the two output CSVs
+  preprocess.py            Image loading + light pre-processing
   io_utils.py              JSON / CSV helpers
   cache.py                 On-disk response cache
-tests/                     Unit tests (no API key required) incl. dashboard smoke tests
-data/sample_level2.csv     Sample questions to try Level 2 on the training bills
-DEMO_GUIDE.md              Step-by-step guide for recording demo/demo.mp4 (section 7.7)
-demo/                      Optional bonus video: demo.mp4 (created by you)
+dashboard/                 Frontend-only Streamlit package (styles, components,
+                           plots, state, io, pipeline glue)
+tools/
+  make_sample_bill.py      Renders the synthetic demo bill + templates
+  rebuild_dashboard_data.py  Rebuild dashboard artefacts from the cache
+  check_output.py          Validates level1/level2 CSV output
+  verify_bill.py           Second-pass verification of specific fields
+tests/                     Unit + dashboard smoke tests (no API key)
+sample/                    Synthetic demo bill + CSV templates
+data/sample_level2.csv     Sample questions to try on the training bills
+DEMO_GUIDE.md              How to record a demo video for the submission
 ```
 
-## AI usage
+## Design decisions
 
-Only the models allowed by the WTQ 2026 rules are called. Using any other model
-leads to disqualification.
+* **Multimodal model for perception only** — reading Urdu, tilted scans and
+  different layouts; and for natural-language explanation.
+* **All arithmetic in code** — the hackathon rules stated calculations are
+  checked against the bill, so deterministic Python keeps answers auditable.
+* **One batched Level-2 call per bill** — 12 questions answered in a single
+  call, staying within free-tier limits (500 requests/day, 15/min).
+* **Disk cache keyed by exact inputs** — `PROMPT_VERSION + provider + model +
+  tag + prompt + image` → re-runs are free and identical.
 
-| Purpose | Model | Provider | Access |
-| --- | --- | --- | --- |
-| Bill reading (vision) + answering questions (primary) | `gemini-3.5-flash-lite` | Google (google-genai) | Free (Google AI Studio) |
-| Automatic backup if the primary fails | `gemini-3.1-flash-lite` | Google (google-genai) | Free (Google AI Studio) |
-| Optional fallback (only if `OPENAI_API_KEY` is set) | `gpt-5-mini` | OpenAI | Paid |
-
-* **Models / APIs / services used by the solution:** Google Gemini via the
-  `google-genai` SDK (primary and backup), optionally OpenAI `gpt-5-mini`.
-* **Other services:** none. No Azure, Textract, Mindee or other extraction
-  services are used.
-* **AI tools used to write the code:** GitHub Copilot / an AI coding assistant
-  were used for pair-programming. (Update this line to list exactly what you used.)
-* **Local OCR:** not required; the vision model reads the bills directly.
-  `opencv-python-headless` can be installed for optional deskewing.
-
-### Why this design
-
-* The multimodal model is used only for perception (reading Urdu, tilted scans
-  and different layouts) and for natural-language explanation.
-* All arithmetic is done in code, because the guide states that calculations
-  are checked against the bill and recommends using code for them.
-* All 12 questions for a bill are answered in a single call to stay well within
-  the free tier (500 requests/day shared across both Gemini models).
-* Every model response is cached on disk, keyed by the exact inputs, so re-runs
-  are free and reproducible.
+Only the models permitted by the WTQ 2026 rules are ever called
+(Gemini 3.5 Flash-Lite primary, Gemini 3.1 Flash-Lite automatic backup,
+optional `gpt-5-mini` / `claude-haiku-4-5` if you add those keys).
 
 ## Environment variables
 
-See `.env.example`. Required: the API key for the provider you use.
+See `.env.example`.
 
 | Variable | Purpose | Example |
 | --- | --- | --- |
 | `MODEL_PROVIDER` | `google`, `openai` or `anthropic` | `google` |
 | `MODEL_NAME` | Primary model ID | `gemini-3.5-flash-lite` |
-| `FALLBACK_MODEL_NAME` | Backup model ID | `gemini-3.1-flash-lite` |
-| `GEMINI_API_KEY` | Google AI Studio key | placeholder in `.env.example` |
+| `FALLBACK_MODEL_NAME` | Automatic backup model | `gemini-3.1-flash-lite` |
+| `GEMINI_API_KEY` | Google AI Studio key (free) | placeholder in `.env.example` |
 | `OPENAI_API_KEY` | Optional | empty |
 | `ANTHROPIC_API_KEY` | Optional | empty |
-
-> The model ID is written two ways in the organizers' PDF
-> (`gemini-3.5-flashlite` vs `gemini-3.5-flash-lite`). Copy the exact ID shown in
-> Google AI Studio.
 
 ## Notes and assumptions
 
 * Grey-boxed / unreadable values are returned as `null` rather than guessed.
 * Credits and subsidies are negative, as required by the guide.
-* PII (names, CNIC, account, consumer, meter, reference numbers) is excluded.
+* PII (names, CNIC, account/consumer/meter/reference numbers) is excluded.
+
+## License
+
+[MIT](LICENSE) © 2026 Swaira Imran

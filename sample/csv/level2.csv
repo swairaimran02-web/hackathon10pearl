@@ -1,0 +1,13 @@
+bill_id,question_id,question,answer
+KESC_DEMO,Q1,How many units did I use this month?,
+KESC_DEMO,Q2,How much of my bill is taxes?,
+KESC_DEMO,Q3,What percentage of my bill is taxes?,
+KESC_DEMO,Q4,What is the effective cost per unit this month?,
+KESC_DEMO,Q5,How much do I have to pay before the due date?,
+KESC_DEMO,Q6,What happens if I pay after the due date?,
+KESC_DEMO,Q7,How many months in my history went above 400 units?,
+KESC_DEMO,Q8,What was my average consumption over the last 12 months?,
+KESC_DEMO,Q9,How much are fuel price adjustments on this bill?,
+KESC_DEMO,Q10,What are my previous dues (arrears)?,
+KESC_DEMO,Q11,What is my current reading and how many units did I use since last month?,
+KESC_DEMO,Q12,What tariff is applied on my bill?,
