@@ -76,6 +76,19 @@ python run.py --bills train/bills --out output/ --no-questions   # Level 1 only
 python run.py --bills train/bills --limit 2 --verbose            # quick smoke test
 ```
 
+## Test-day run (official test data)
+
+Place the organizers' test bundle as `data/test/` (bills images plus the two CSV
+templates), then, in Windows PowerShell:
+
+```powershell
+python run.py --bills data\test\bills --out output `
+    --level1-template data\test\csv\level1.csv `
+    --level2-template data\test\csv\level2.csv
+python tools\check_output.py --output output --level2-template data\test\csv\level2.csv
+python tools\package_submission.py --output output --dest wtq-submission.zip
+```
+
 Run the interactive dashboard:
 
 ```bash
