@@ -28,6 +28,8 @@ SOURCE_ITEMS = [
     "run.py",
     "app.py",
     "billdecoder",
+    "dashboard",
+    ".streamlit",
     "tools",
     "tests",
 ]
