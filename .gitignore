@@ -7,4 +7,5 @@ __pycache__/
 output/extraction_raw.json
 notes/
 data/train/
+data/test/
 *.zip
