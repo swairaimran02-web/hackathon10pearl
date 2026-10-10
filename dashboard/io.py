@@ -6,21 +6,44 @@ the dashboard can display real data and offer real downloads.
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
+_SAFE_ID = set("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-")
 
-def uploaded_to_temp(uploaded, name: str = "") -> Path:
+
+def _safe_stem(name: str) -> str:
+    """A filesystem/cache-safe bill id from the original file name."""
+    stem = Path(name).stem.strip()
+    stem = "".join(ch if ch in _SAFE_ID else "_" for ch in stem)
+    stem = re.sub(r"_+", "_", stem).strip("_") or "bill"
+    return stem[:64]  # keep ids short enough for cache keys and labels
+
+
+def uploaded_to_temp(uploaded, name: str = "", folder: str | Path | None = None) -> Path:
     """Persist an uploaded Streamlit file to a temp path and return it.
 
-    The returned file is deleted by the OS when the session ends, so nothing
-    user-uploaded ever lands in the output/ or source/ folders.
+    The temp file keeps the ORIGINAL file name (sanitised) so the extracted
+    bill id matches the official templates (e.g. ``KESC_0006.png`` -> bill
+    ``KESC_0006``) and cache tags stay stable — re-uploading a bill that was
+    already processed is instant and free.
+
+    The returned file lives in a session-scoped temp folder, never in
+    output/ or source/.
     """
-    suffix = Path(uploaded.name or name or "file").suffix
-    target = Path(tempfile.gettempdir()) / f"wtq_upload_{datetime.now():%Y%m%d%H%M%S%f}{suffix}"
+    original = Path(uploaded.name or name or "file").name
+    stem = _safe_stem(original)
+    suffix = Path(original).suffix.lower() or ".img"
+    target_dir = Path(folder) if folder else Path(tempfile.gettempdir())
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / f"{stem}{suffix}"
+    # Only rename on a real collision (same name uploaded twice this session).
+    if target.exists():
+        target = target_dir / f"{stem}_{datetime.now():%H%M%S}{suffix}"
     target.write_bytes(uploaded.getvalue())
     return target
 

@@ -47,10 +47,11 @@ def process_paths(client, paths, log: LogFn | None = None, progress=None) -> tup
                 f"{_short(bill.get('units_consumed'))} units · "
                 f"current bill {_short(bill.get('current_bill'))}"
             )
-            if warnings:
-                log("warn", f"{summary} ({len(warnings)} advisory warning{'s' if len(warnings) != 1 else ''})")
-            else:
-                log("ok", summary)
+            if log:
+                if warnings:
+                    log("warn", f"{summary} ({len(warnings)} advisory warning{'s' if len(warnings) != 1 else ''})")
+                else:
+                    log("ok", summary)
         except Exception as err:  # noqa: BLE001 - keep processing other bills
             failures.append({"bill_id": path.stem, "error": str(err)})
             if log:

@@ -5,10 +5,14 @@ All state lives in ``st.session_state`` so it survives Streamlit reruns:
   * failures  - list of {bill_id, error} for bills that failed extraction
   * log       - processing log entries {t, level, msg}
   * output_dir - where generated CSV files are written
+  * upload_dir - session-scoped temp folder for uploaded bill images
 """
 from __future__ import annotations
 
+import os
+import tempfile
 import time
+from pathlib import Path
 
 import streamlit as st
 
@@ -24,6 +28,15 @@ def init() -> None:
     ss.setdefault("log", [])
     ss.setdefault("output_dir", DEFAULT_OUTPUT_DIR)
     ss.setdefault("page", "Dashboard")
+    ss.setdefault(
+        "upload_dir",
+        str(Path(tempfile.gettempdir()) / f"wtq_uploads_{os.urandom(6).hex()}"),
+    )
+
+
+def upload_dir() -> Path:
+    """Session-scoped folder for uploaded images (persists across reruns)."""
+    return Path(st.session_state.get("upload_dir") or str(Path(tempfile.gettempdir()) / "wtq_uploads"))
 
 
 def add_log(level: str, message: str) -> None:

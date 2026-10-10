@@ -125,8 +125,7 @@ def _template_path(uploaded, key_name: str) -> Path | None:
     """Persist an uploaded template CSV to a temp file (or return None)."""
     if uploaded is None:
         return None
-    path = ui_io.uploaded_to_temp(uploaded, key_name)
-    return path
+    return ui_io.uploaded_to_temp(uploaded, key_name, folder=app_state.upload_dir())
 
 
 def _run_processing(paths: list[Path], tpl1: Path | None, tpl2: Path | None) -> None:
@@ -168,7 +167,14 @@ def _run_processing(paths: list[Path], tpl1: Path | None, tpl2: Path | None) -> 
             f"**{result['answered']}** answered."
         )
     elif failures:
-        st.error("❌ Every bill failed to extract — see the processing log below.")
+        st.error("❌ Every bill failed to extract — the processing log shows why.")
+        for item in failures[:5]:
+            st.markdown(f"- **{item['bill_id']}**: `{item['error']}`")
+        st.info(
+            "Common causes: the image is not a utility bill, it is a photo with "
+            "heavy glare/rotation, or it is a PDF (PDFs are not supported — "
+            "save them as PNG/JPG first)."
+        )
     else:
         st.warning("Nothing to process.")
 
@@ -307,6 +313,11 @@ def page_upload() -> None:
             accept_multiple_files=True,
             key="bill_files",
         )
+        st.caption(
+            "💡 Your original file names become the bill IDs — e.g. "
+            "`KESC_0006.png` → bill **KESC_0006**, which matches the official "
+            "templates and re-uses cached results (fast & free)."
+        )
         # Small preview grid so the user can confirm what they selected.
         if uploaded:
             st.caption(f"🖼️ {len(uploaded)} file(s) selected — preview:")
@@ -314,8 +325,16 @@ def page_upload() -> None:
             for i, file in enumerate(uploaded[:8]):
                 with cols[i % 4]:
                     st.image(file, width=130)
-                    st.caption(f"{file.name} · {file.size / 1024:.0f} KB" if file.size else file.name)
-        paths = [ui_io.uploaded_to_temp(f) for f in uploaded] if uploaded else []
+                    st.caption(
+                        f"{Path(file.name).name} · {file.size / 1024:.0f} KB"
+                        if file.size
+                        else Path(file.name).name
+                    )
+        paths = (
+            [ui_io.uploaded_to_temp(f, folder=app_state.upload_dir()) for f in uploaded]
+            if uploaded
+            else []
+        )
 
     st.markdown("### 🗂️ Optional CSV templates")
     tpl1 = st.file_uploader(
