@@ -66,7 +66,6 @@ def process_paths(client, paths, log: LogFn | None = None, progress=None) -> tup
 
 def write_artefacts(records: dict[str, dict], output_dir: Path) -> None:
     """Persist records so the dashboard can reload them on the next run."""
-    output_dir = Path(output_dir)
     artefacts = {
         bill_id: {
             "bill": record["bill"],
