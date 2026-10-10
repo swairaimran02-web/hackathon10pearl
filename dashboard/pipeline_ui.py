@@ -56,7 +56,10 @@ def process_paths(client, paths, log: LogFn | None = None, progress=None) -> tup
             if log:
                 log("err", f"{path.name} → FAILED: {err}")
         if progress:
-            progress(index / total, text=f"Extracting bills… {index}/{len(paths)}")
+            progress.progress(
+    index / total,
+    text=f"Extracting bills... {index}/{len(paths)}"
+)
     return records, failures
 
 
