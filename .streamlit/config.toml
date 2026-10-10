@@ -1,0 +1,16 @@
+# Streamlit theme for the Utility Bill Decoder dashboard.
+# Frontend-only; these colors are also used by dashboard/styles.py.
+
+[theme]
+base = "light"
+primaryColor = "#4F46E5"
+backgroundColor = "#F4F6FB"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1E293B"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true

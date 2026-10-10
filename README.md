@@ -76,11 +76,58 @@ python run.py --bills train/bills --out output/ --no-questions   # Level 1 only
 python run.py --bills train/bills --limit 2 --verbose            # quick smoke test
 ```
 
-Run the interactive demo:
+Run the interactive dashboard:
 
 ```bash
 streamlit run app.py
 ```
+
+## Dashboard (Streamlit app)
+
+An interactive, competition-ready dashboard that drives the **exact same
+`billdecoder` backend** as the CLI — the generated CSV files are identical to
+`run.py` output. The API key stays in the root `.env` and is never displayed
+or logged.
+
+**Install (first time only), Windows PowerShell:**
+
+```powershell
+cd D:\github\hackathon10pearl
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+**Configure your key (one time):**
+
+```powershell
+copy .env.example .env
+# then edit .env and set GEMINI_API_KEY=<your Google AI Studio key>
+```
+
+**Run:**
+
+```powershell
+streamlit run app.py
+```
+
+Your browser opens http://localhost:8501. (Stop it with `Ctrl+C`.)
+
+What works on each page:
+
+| Page | What actually works |
+| --- | --- |
+| **Dashboard** | Real statistics from the files in `output/`: bills processed, successful extractions, failed bills, questions answered + live processing log. |
+| **Upload Bills** | Drag & drop bill images (PNG/JPG/WEBP/BMP) with previews, **or** point at a bills folder. Optional Level 1 / Level 2 CSV templates keep the official row order. "Process bills" runs real extraction and writes `output/level1.csv` (and `output/level2.csv` when the Level 2 template is given) with a progress bar and log. |
+| **Bill Analysis** | Every extracted bill: billing dates, meter readings, units, charges, taxes, payable amounts and the printed monthly history (bar chart + table). Missing values show **"Not available"** — nothing is invented. |
+| **Questions & Answers** | Searchable table of every supplied question with its answer; unanswered questions are clearly marked. You can generate answers in-page with the Level 2 template. |
+| **Generated Reports** | Working download buttons for the **actual** `output/level1.csv` / `output/level2.csv` files, previews, and regeneration from processed bills. |
+| **Settings** | Model configuration read from `.env` (API key status only, never the key itself) + a "Test API connection" button. |
+
+> Privacy note: personal identifiers (names, addresses, reference and meter
+> serial numbers) are deliberately excluded per the competition rules, so the
+> dashboard shows "Not available" for them instead of extracting them.
 
 Run the unit tests (no API key needed):
 
@@ -123,7 +170,17 @@ units: 2025-07 (239) and 2025-08 (203)").
 
 ```
 run.py                     Command-line entry point
-app.py                     Streamlit demo
+app.py                     Streamlit dashboard (six pages, full workflow)
+streamlit run app.py       how to launch the dashboard
+.streamlit/config.toml     Dashboard theme (navy sidebar, light background)
+dashboard/
+  __init__.py
+  styles.py                CSS: theme, cards, badges, log
+  components.py            UI building blocks (cards, empty states, tables)
+  plots.py                 Plotly charts from real extracted data
+  state.py                 Session state (records, failures, log)
+  io.py                    Temp uploads, reading generated CSVs/artefacts
+  pipeline_ui.py           Glue: calls billdecoder, writes output files
 tools/verify_bill.py       Re-read specific fields for verification
 billdecoder/
   config.py                Environment + allowed-model validation
@@ -139,7 +196,7 @@ billdecoder/
   preprocess.py            Image loading and light pre-processing
   io_utils.py              JSON / CSV helpers
   cache.py                 On-disk response cache
-tests/                     Unit tests (no API key required)
+tests/                     Unit tests (no API key required) incl. dashboard smoke tests
 data/sample_level2.csv     Sample questions to try Level 2 on the training bills
 ```
 
