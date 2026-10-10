@@ -70,9 +70,14 @@ def line_items_hbar(titled_rows: list[tuple[str, float]]):
     fig = px.bar(df, x="Amount", y="Item", orientation="h", color="Amount",
                  color_continuous_scale=["#E0E7FF", ACCENT])
     fig.update_traces(marker_line_width=0)
-    fig.update_layout(**_LAYOUT, height=max(220, 60 * len(df) + 80),
-                      coloraxis_showscale=False, xaxis_title="PKR",
-                      yaxis_title="")
+    layout = {
+        **_LAYOUT,
+        "height": max(220, 60 * len(df) + 80),
+        "coloraxis_showscale": False,
+        "xaxis_title": "PKR",
+        "yaxis_title": "",
+    }
+    fig.update_layout(**layout)
     fig.update_xaxes(zeroline=False)
     return fig
 
