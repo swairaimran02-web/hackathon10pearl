@@ -1,0 +1,8 @@
+# Secrets and local files - never submit these
+.env
+.cache/
+venv/
+__pycache__/
+*.pyc
+output/extraction_raw.json
+notes/
