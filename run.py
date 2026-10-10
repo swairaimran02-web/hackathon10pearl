@@ -89,11 +89,14 @@ def main(argv=None) -> int:
             record = {"bill_id": bill_id, "bill": None, "history": [], "raw": {}}
         if record.get("bill"):
             records[bill_id] = record
-            print(
+            line = (
                 f"[{index}/{total}] {bill_id}: provider={record['bill']['provider']} "
                 f"units={record['bill']['units_consumed']} "
                 f"bill={record['bill']['current_bill']}"
             )
+            if record.get("warnings"):
+                line += "  WARNINGS: " + "; ".join(record["warnings"])
+            print(line)
         else:
             print(f"[{index}/{total}] {bill_id}: extraction failed")
 
@@ -114,7 +117,11 @@ def main(argv=None) -> int:
 
     # ---- Debug artefacts -------------------------------------------------
     artefacts = {
-        bill_id: {"history": rec["history"], "raw": rec.get("raw", {})}
+        bill_id: {
+            "history": rec["history"],
+            "warnings": rec.get("warnings", []),
+            "raw": rec.get("raw", {}),
+        }
         for bill_id, rec in records.items()
     }
     (out_dir / "extraction_raw.json").write_text(

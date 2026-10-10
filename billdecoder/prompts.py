@@ -107,7 +107,16 @@ QA_SYSTEM = (
     "information and never invent numbers. Label any estimate clearly and show how "
     "you calculated it. If the bill does not show a needed value, say so instead of "
     "guessing. Exclude personal identifiers. Always answer in English, even when "
-    "part of the bill is in Urdu."
+    "part of the bill is in Urdu.\n"
+    "FORMATTING RULES\n"
+    "- Quote money as \"PKR <number>\" (for example \"PKR 569.62\").\n"
+    "- Give percentages to one decimal place (for example \"16.6%\").\n"
+    "- Months in monthly_history use YYYY-MM codes. Quote them EXACTLY as given "
+    "(for example \"2025-07\"). Never rewrite, reformat or guess the year, and "
+    "never write months like \"July 2007\" - copy the 4-digit year from the code.\n"
+    "- When a count is requested, count carefully over the list you are given and "
+    "say whether the current month is included.\n"
+    "- If the bill does not show a needed value, state that it is not shown on the bill."
 )
 
 
@@ -117,7 +126,9 @@ def build_qa_prompt(bill: dict, facts: dict, questions: list[dict]) -> str:
         f"{QA_SYSTEM}\n\n"
         "BILL DATA (Level 1 JSON):\n"
         f"{json.dumps(bill, ensure_ascii=False)}\n\n"
-        "COMPUTED FIGURES (already calculated from the bill, use these numbers):\n"
+        "COMPUTED FIGURES (already calculated from the bill, use these numbers, "
+        "including monthly_history which is a list of {\"month\": \"YYYY-MM\", "
+        "\"units\": number}):\n"
         f"{json.dumps(facts, ensure_ascii=False)}\n\n"
         "QUESTIONS:\n"
         f"{json.dumps(questions, ensure_ascii=False)}\n\n"

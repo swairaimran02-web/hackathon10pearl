@@ -1,0 +1,6 @@
+bill_id,question_id,question,answer
+KESC_0008,Q1,How much of my bill is taxes?,"Your total taxes are PKR 569.62, which makes up 16.6% of your current bill. This includes electricity duty of PKR 29.41, GST of PKR 520.21, and municipal tax of PKR 20."
+KESC_0008,Q2,How many months in my history went above 200 units?,"Based on the 13 months listed in your history, there are 2 months that went above 200 units (""2025-07"" with 239 units and ""2025-08"" with 203 units). The current month (""2026-04"" with 151 units) is included in this list."
+LESCO_0006,Q1,How many units did I use this month?,You used 65 units this month.
+LESCO_0006,Q2,What percentage of my bill is taxes?,Taxes make up 31.3% of your bill.
+IESCO_0004,Q1,What is the effective cost per unit this month?,The effective cost per unit this month is PKR 20.68.

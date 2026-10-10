@@ -99,11 +99,32 @@ pytest -q
 The CSV files are written with Python's `csv` module, so commas, quotes and
 line breaks are quoted correctly and every JSON object stays on one line.
 
+## Validated against the training bills
+
+Ran end-to-end on the 5 training bills (`data/train/bills`) with
+`gemini-3.5-flash-lite`:
+
+| Bill | provider | units | current bill | Notes |
+| --- | --- | --- | --- | --- |
+| KESC_0008 | KE | 151 | 3430.24 | **Matches the guide's official JSON field-for-field** |
+| KESC_0004 | KE | 901 | 45570.25 | 4-register TOU meter - readings correctly `null`; arrears -91877.02, payable 0 confirmed |
+| IESCO_0004 | IESCO | 158 | 3267 | FPA/subsidy lines and payable 3535/3812 confirmed |
+| LESCO_0005 | LESCO | 1017 | 20726 | Bill genuinely prints negative history units; payable is `54770CR` -> -54770 |
+| LESCO_0006 | LESCO | 65 | 5501 | charges+taxes reconcile exactly (5501) |
+
+Every suspicious value was double-checked with a second, focused model read
+(`python tools/verify_bill.py --image <bill> --question "..."`).
+
+A sample Level 2 run on the guide's own questions for KESC_0008 produced the
+correct answers ("taxes = PKR 569.62, 16.6% of the bill"; "2 months above 200
+units: 2025-07 (239) and 2025-08 (203)").
+
 ## Project layout
 
 ```
 run.py                     Command-line entry point
 app.py                     Streamlit demo
+tools/verify_bill.py       Re-read specific fields for verification
 billdecoder/
   config.py                Environment + allowed-model validation
   llm.py                   Provider-agnostic client (Google / OpenAI / Anthropic)
@@ -111,13 +132,15 @@ billdecoder/
   schema.py                Level 1 schema and controlled vocabularies
   extract.py               Image -> normalized bill object
   normalize.py             Numbers, dates, signs, null handling
+  validate.py              Internal-consistency warnings (numbers must be as printed)
   calc.py                  Deterministic calculations
   level1.py                builds output/level1.csv
   level2.py                builds output/level2.csv
   preprocess.py            Image loading and light pre-processing
   io_utils.py              JSON / CSV helpers
   cache.py                 On-disk response cache
-tests/                     Unit tests for normalization
+tests/                     Unit tests (no API key required)
+data/sample_level2.csv     Sample questions to try Level 2 on the training bills
 ```
 
 ## AI usage
