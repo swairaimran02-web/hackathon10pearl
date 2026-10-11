@@ -31,11 +31,13 @@ def _app() -> AppTest:
 
 def test_app_starts_and_sidebar_has_six_pages() -> None:
     at = _app()
-    # The navigation radio lives in the sidebar and exposes all six pages.
+    # The navigation radio lives in the sidebar and exposes all six pages
+    # (labels may carry an icon prefix, e.g. "📊 Dashboard").
     radios = at.sidebar.radio
     assert len(radios) == 1
     options = list(radios[0].options)
-    assert options == PAGES
+    assert len(options) == len(PAGES)
+    assert all(page in opt for opt, page in zip(options, PAGES))
 
 
 def test_every_page_renders_without_exception() -> None:
