@@ -9,3 +9,7 @@ notes/
 data/train/
 data/test/
 *.zip
+
+# Streamlit server output logs
+server.log
+server.err.log

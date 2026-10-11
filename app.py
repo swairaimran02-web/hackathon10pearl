@@ -57,6 +57,16 @@ PAGES = [
     "Settings",
 ]
 
+# Icons shown next to the sidebar navigation (values stay the exact page names).
+PAGE_ICONS = {
+    "Dashboard": "📊",
+    "Upload Bills": "📤",
+    "Bill Analysis": "🔍",
+    "Questions & Answers": "💬",
+    "Generated Reports": "📄",
+    "Settings": "⚙️",
+}
+
 # Human readable names for the charge / tax line types (schema.py vocabularies).
 CHARGES_LABELS = {
     "energy": "Energy charges",
@@ -190,12 +200,18 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+    # Deep-linkable pages: ?page=Bill+Analysis opens that page directly.
+    requested = st.query_params.get("page")
+    if requested not in PAGES:
+        requested = st.session_state.get("page", "Dashboard")
+
     page = st.radio(
         "Navigate",
         PAGES,
         key="page_nav",
         label_visibility="collapsed",
-        index=PAGES.index(st.session_state.get("page", "Dashboard")),
+        index=PAGES.index(requested),
+        format_func=lambda p: f"{PAGE_ICONS.get(p, '')} {p}",
     )
     st.session_state["page"] = page
 
@@ -223,6 +239,23 @@ def page_dashboard() -> None:
         "Live overview based on the real files in this session and in the output folder.",
     )
     stats = _stats()
+
+    if stats["total"] == 0:
+        ui.hero(
+            "Utility Bill Decoder",
+            "Upload bill images or point at a bills folder, and this dashboard "
+            "extracts every field and answers customer questions — all from real "
+            "AI runs, nothing hardcoded.",
+            ["Vision-first extraction", "Level 1 + Level 2 outputs", "No API key shown"],
+        )
+    else:
+        ui.hero(
+            "Utility Bill Decoder",
+            f"{stats['ok']} bill(s) processed and {stats['answered']} of "
+            f"{stats['questions']} questions answered — every number below comes "
+            "from the real output files.",
+            ["Live data", "Cached re-runs are free", "Results reproducible"],
+        )
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:

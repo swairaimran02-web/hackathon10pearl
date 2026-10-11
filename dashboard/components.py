@@ -53,9 +53,9 @@ def _display(value) -> str:
 
 # ------------------------------------------------------------- layout ------
 def page_header(icon: str, title: str, subtitle: str = "") -> None:
-    """Big page title with icon and optional subtitle."""
+    """Big page title with icon tile and optional subtitle."""
     st.markdown(
-        f"<div class='w-titlebar'><span class='w-ico'>{icon}</span>"
+        f"<div class='w-titlebar'><span class='w-ico-tile'>{icon}</span>"
         f"<span class='w-title'>{esc(title)}</span></div>",
         unsafe_allow_html=True,
     )
@@ -63,11 +63,27 @@ def page_header(icon: str, title: str, subtitle: str = "") -> None:
         st.markdown(f"<div class='w-subtitle'>{esc(subtitle)}</div>", unsafe_allow_html=True)
 
 
+def hero(title: str, subtitle: str, chips: list[str] | None = None) -> None:
+    """A gradient hero banner for the top of a page (Dashboard).
+
+    ``chips`` are small translucent pills (static facts such as capability
+    notes) — never statistics, those are always computed from real data.
+    """
+    chips_html = "".join(f"<span class='w-chip'>{esc(c)}</span>" for c in (chips or []))
+    st.markdown(
+        f"<div class='w-hero'><div class='w-hero-title'>{esc(title)}</div>"
+        f"<div class='w-hero-sub'>{esc(subtitle)}</div>"
+        f"<div class='w-hero-chips'>{chips_html}</div></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def stat_card(icon: str, value, label: str, accent: str = ACCENT) -> None:
     """Renders one dashboard stat card (call inside a st.columns slot)."""
     st.markdown(
         f"<div class='w-card w-stat'>"
-        f"<div class='w-stat-icon' style='background:{accent}1A;color:{accent}'>{icon}</div>"
+        f"<div class='w-stat-icon' "
+        f"style='background:{accent}1A;color:{accent};border:1px solid {accent}33'>{icon}</div>"
         f"<div><div class='w-stat-value'>{esc(value)}</div>"
         f"<div class='w-stat-label'>{esc(label)}</div></div></div>",
         unsafe_allow_html=True,
@@ -100,7 +116,7 @@ def empty_state(icon: str, title: str, body: str) -> None:
     """Friendly empty-state block with a hint about what to do next."""
     st.markdown(
         f"<div class='w-card'><div class='w-empty'>"
-        f"<span class='w-ico'>{icon}</span>"
+        f"<div class='w-empty-ico'>{icon}</div>"
         f"<div class='w-title'>{esc(title)}</div>"
         f"<div>{esc(body)}</div></div></div>",
         unsafe_allow_html=True,
