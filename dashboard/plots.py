@@ -13,15 +13,12 @@ import streamlit as st
 ACCENT = "#4F46E5"
 ACCENT2 = "#7C3AED"
 
-_FONT = "Inter, 'Segoe UI', Roboto, sans-serif"
 _LAYOUT = dict(
     template="plotly_white",
     height=300,
-    margin=dict(l=10, r=10, t=44, b=10),
+    margin=dict(l=10, r=10, t=40, b=10),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family=_FONT, color="#1E293B", size=12),
-    title=dict(font=dict(family="Sora, Inter, sans-serif", size=15, color="#0F172A")),
 )
 
 
